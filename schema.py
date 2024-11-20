@@ -103,7 +103,7 @@ class PlainUserSchema(Schema):
     f_name = fields.Str(required=True)
     l_name = fields.Str(required=True)
     password = fields.Str(required=True, load_only=True)
-    phone_number = fields.Str()
+    phone_number = fields.Str(required=True)
     access_token = fields.Str(dump_only=True)
     refresh_token = fields.Str(dump_only=True)
     role = fields.Enum (enum= RoleEnum, dump_only=True)
@@ -147,7 +147,7 @@ class PlainBookedSchema(Schema):
     room_id = fields.Str(required=True)
     price = fields.Float(required=True)
     date_time_start = fields.Str(required=True)
-    date_time_enz = fields.Str(required=True)
+    date_time_end = fields.Str(required=True)
 
 
 class AdminSchema(PlainUserSchema):
