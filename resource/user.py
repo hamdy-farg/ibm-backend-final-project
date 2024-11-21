@@ -87,7 +87,7 @@ class UserRegister(MethodView):
 class LoginUser(MethodView):
     @blp.arguments(PlainUserSchema, location="form")
     @blp.response(200, AdminSchema, description="Response for admin")
-    @blp.alt_response(201, ClientSchema, description="Response for client")
+    # @blp.alt_response(201, ClientSchema, description="Response for client")
     def post(self, user_data):
 
         user = ClientModel.query.filter(
