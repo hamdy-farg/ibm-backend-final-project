@@ -12,7 +12,7 @@ from db import db
 IMAGE_EXTENTIONS = ['jpg', "png", "jpeg"]
 
 class BaseModel(db.Model):
-    __abstract__= True
+    __abstract__ = True
 
     id = db.Column(db.String(32), primary_key=True, nullable=False, default=lambda: uuid.uuid4().hex)
     created_at = db.Column(db.DateTime(timezone=True),default=func.now(),nullable=False )
