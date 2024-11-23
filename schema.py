@@ -7,13 +7,10 @@ from werkzeug.utils import secure_filename
 
 from models.enum import RoleEnum
 
-DATE_TIME_STAMP = "%Y-%M-%DT%H:%M:%S"
-TIME_STAMP = "%H:%M:%S"
-DATE_STAMP = "%Y-%M-%D"
+
 class PlainWorkSpaceSchema(Schema):
     title = fields.Str(required=True)
     description = fields.Str(required=True)
-    owner_id = fields.Str(required=True)
     location = fields.Str(required=True)
 
     @validates("title")
@@ -94,21 +91,13 @@ class PlainRoomSchema(Schema):
             raise ValidationError("you have to enter correct end date")
 
         
-
-class PlainUserSchema(Schema):
-    id = fields.Str(dump_only=True)
-    created_at = fields.DateTime(dumb_only=True)
-    updated_at = fields.DateTime(dumb_only=True)
+class PlainUserLoginSchema(Schema):
     email_address = fields.Str(required=True)
-    f_name = fields.Str(required=True)
-    l_name = fields.Str(required=True)
     password = fields.Str(required=True, load_only=True)
-    phone_number = fields.Str()
     access_token = fields.Str(dump_only=True)
     refresh_token = fields.Str(dump_only=True)
-    role = fields.Enum (enum= RoleEnum, dump_only=True)
+    role = fields.Enum(enum= RoleEnum, dump_only=True)
 
-    
 
     @validates("email_address")
     def validate_email(self, value):
@@ -130,7 +119,12 @@ class PlainUserSchema(Schema):
             raise ValidationError("Password must contain at least one lowercase letter.")
         if not any(char in "!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?`~" for char in value):
             raise ValidationError("Password must contain at least one special character.")
-
+class PlainUserRegisterSchema(PlainUserLoginSchema):
+    id = fields.Str(dump_only=True)
+    f_name = fields.Str(required=True)
+    l_name = fields.Str(required=True)
+    phone_number = fields.Str(required=True)
+    
     @validates("f_name")
     @validates("l_name")
     def validate_name(self, value):
@@ -139,23 +133,50 @@ class PlainUserSchema(Schema):
             raise ValidationError("Name must contain only alphabetic characters.")
         if len(value) < 2 or len(value) > 50:
             raise ValidationError("Name must be between 2 and 50 characters long.")
-        
+
+class PlainUserUpdateSchema(Schema):
+    f_name = fields.Str()
+    l_name = fields.Str()
+    email_address = fields.Str()
+    phone_number = fields.Str()
+
+    @validates("email_address")
+    def validate_email(self, value):
+        """Validate the email address format."""
+        if len(value) != 0 and value != "":
+            email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+            if not re.match(email_regex, value):
+                raise ValidationError("Invalid email address format.")
+
+    @validates("f_name")
+    @validates("l_name")
+    def validate_name(self, value):
+        """Validate first and last name."""
+
+        if len(value) != 0  and value != "":
+            if not value.isalpha():
+                raise ValidationError("Name must contain only alphabetic characters.")
+            if len(value) < 2 or len(value) > 50:
+                raise ValidationError("Name must be between 2 and 50 characters long.")
 
 
+class PlainWorkSpaceImagesSchema(Schema):
+    photos = fields.Dict(dump_only=True)
 class PlainBookedSchema(Schema):
     client_id = fields.Str(required=True)
     room_id = fields.Str(required=True)
     price = fields.Float(required=True)
     date_time_start = fields.Str(required=True)
-    date_time_enz = fields.Str(required=True)
+    date_time_end = fields.Str(required=True)
 
 
-class AdminSchema(PlainUserSchema):
+class AdminSchema(PlainUserRegisterSchema):
     workSpaces = fields.List(fields.Nested(PlainWorkSpaceSchema),dump_only=True)
 
 
 
-class ClientSchema(PlainUserSchema):
+class ClientSchema(PlainUserRegisterSchema):
+
     booked = fields.List(fields.Nested(PlainBookedSchema),dump_only=True)
 
     

@@ -1,11 +1,15 @@
+import os
 import uuid
 from datetime import datetime
 
+from flask import jsonify
+from flask_smorest import abort
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
 
 from db import db
 
+IMAGE_EXTENTIONS = ['jpg', "png", "jpeg"]
 
 class BaseModel(db.Model):
     __abstract__ = True
@@ -43,6 +47,7 @@ class BaseModel(db.Model):
         Example usage:
             user.update(email_address="new_email@example.com", phone_number="1234567890")
         """
+        print("begen update")
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
@@ -53,3 +58,127 @@ class BaseModel(db.Model):
         # Commit changes to the database
         done =  self.save()
         return done
+
+    def check_image(self, request_data= None, file=None):
+        """ check image
+                to check image is valid or not
+
+            pre_condition  : Enter request_data contains file to check or file
+            
+            - ARGUMENTS
+                - request_data  default None
+                - file          default None
+
+            - RETURN 
+                - file if success
+                - error message if fial
+        """
+        if file is None:
+            if request_data is not None :
+                if 'image' not in request_data.files:
+                    return "image missing"
+        if file is None:
+            if request_data is not None:
+                file = request_data.files['image']
+        # print(file.read())
+        if file is not None:
+            if  file.filename == '':
+                return "image not selected"
+            file_extenstion = file.filename.split(".")[-1]
+            if file_extenstion not in IMAGE_EXTENTIONS:
+                print("extenstion error")
+                return "this file extenstion is not allowed please send [jpg, jpeg, png]"
+            return file
+        else :
+            return "you have to pass file or give request"
+    def save_image(self, folder_name, request_data = None, file= None ):
+        """ save_image funcaiton
+            - arguments
+                - file contains the image
+                - user 
+            - Return
+                - user if successed
+                - if fial  error message
+        """
+       
+        # print(request_data.files['image'].read())
+        
+            
+  
+       
+        
+
+        try:
+            print("1")
+            checked = self.check_image(request_data=request_data, file=file)
+            if isinstance(checked, str):
+                print("2")
+                error_msg = checked
+                return error_msg
+            print("4")
+            file = checked
+            file_extenstion = file.filename.split(".")[-1]
+            folder_path =  os.path.join(os.getcwd(),"assets","user",f"{folder_name}")
+            self.save()
+            final_path = os.path.join(os.getcwd(),"assets","user",f"{folder_name}", f"{self.id}.{file_extenstion}")
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+            if os.path.exists(final_path):
+                os.remove(final_path)
+            file.save(final_path)
+            saved_path = final_path = os.path.join("assets","user",f"{folder_name}", f"{self.id}.{file_extenstion}")
+            self.image = saved_path
+        except Exception as e:
+            print(e)
+            return "error accured while saving image"
+        return self
+
+    def validate_user_data(self, user_data, request):
+
+        """ validate uesr data to save user_data into db
+            - ARGUMENTS:
+                - user 
+                - user data
+            - RETURN:
+                - if fial : error message
+                - if success  user with full data (email_address, phone, image, ......)
+                    
+        """
+       
+        error_msg = None
+        if  error_msg is None and  user_data.get("email_address") is not None:
+            print("enter", type(self), type(self.__class__))
+            
+            filtered_user = self.__class__.query.filter(self.__class__.email_address == user_data.get("email_address")).first()
+            print(filtered_user)
+            if filtered_user is not None:
+                error_msg = "the email address is taken before"
+            else:
+                self.email_address =  user_data.get("email_address")
+        # print(error_msg)
+        
+        if  error_msg is None and user_data.get("phone_number") is not None:
+            phone_number = user_data.get("phone_number")
+            if phone_number.isdigit():
+                filtered_user = self.__class__.query.filter(self.__class__.phone_number == user_data.get("phone_number")).first()
+                if filtered_user is not None:
+                    error_msg = "the phone number is taken before type another one"
+                else:
+                    self.phone_number = phone_number
+                    self.f_name = user_data.get("f_name")
+                    self.l_name = user_data.get("l_name")
+            else:
+                error_msg = "Invalid phone number"
+        
+           
+        if error_msg is None:
+            self.set_password(raw_password=user_data["password"])
+            if error_msg is None :
+                user = self.save_image(request_data=request, folder_name="user_pics")
+                if isinstance(user, str):
+                    error_msg = user
+                
+            if error_msg is None :
+                return self
+        return  error_msg
+

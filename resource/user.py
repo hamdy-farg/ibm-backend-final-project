@@ -1,113 +1,147 @@
 import os
+from typing import TypeVar
 
-from flask import jsonify, request
+from flask import Response, jsonify, request, send_file
 from flask.views import MethodView
 from flask_jwt_extended import (create_access_token, create_refresh_token,
                                 get_jwt, get_jwt_identity, jwt_required)
 from flask_smorest import Blueprint, abort
 from passlib.hash import pbkdf2_sha256
 
-from models.user import AdminModel, ClientModel
-from schema import AdminSchema, ClientSchema, PlainUserSchema
+from models.enum import RoleEnum
+from models.user import UserModel
+from schema import (AdminSchema, ClientSchema, PlainUserLoginSchema,
+                    PlainUserRegisterSchema, PlainUserUpdateSchema)
 
 blp = Blueprint("Users","user", description="CRUD operation with user" )
+
+from block_list import BLOCKLIST
 
 
 @blp.route("/register", strict_slashes=False)
 class UserRegister(MethodView):
-    @blp.arguments(ClientSchema, location="form")
-    @blp.response(201, ClientSchema)
+    @blp.arguments(PlainUserRegisterSchema, location="form")
+    @blp.response(201, PlainUserRegisterSchema)
     def post(self, user_data):
         error_msg = None
-        user = ClientModel()
-        if user_data.get("email_address") is not None:
-            filtered_user = ClientModel.query.filter(ClientModel.email_address == user_data.get("email_address")).first()
-            if filtered_user is not None:
-                error_msg = "the email address is taken before"
-                return jsonify({"message":error_msg}),401
+        user = UserModel()
+      
+        validate = user.validate_user_data(user_data=user_data, request= request)
+        if validate  is not None and isinstance(validate, str):
+            error_msg = validate
+            return abort(401, message = error_msg)
+
+        user = validate
+        # user = user.save_image(request_data= request)
+        if  isinstance(user, str):
+            error_msg = user
+            return abort(401, message=error_msg)
+        elif isinstance(user, UserModel):
+            user.access_token = create_access_token(identity=user.id, fresh=True)
+            user.refresh_token = create_refresh_token(user.id)
+            user_saved = user.save()
+            if user_saved:
+                return user
             else:
-                user.email_address =  user_data.get("email_address")
-
-        if user_data.get("phone_number") is not None:
-            phone_number = user_data.get("phone_number")
-            if phone_number.isdigit():
-                filtered_user = ClientModel.query.filter(ClientModel.phone_number == user_data.get("phone_number")).first()
-                if filtered_user is not None:
-                    error_msg = "the phone number is taken before type another one"
-                    return jsonify({"message":error_msg}),401
-                else:
-                    user.phone_number = phone_number
-            else:
-                error_msg = "Invalid phone number"
-                return jsonify({"message": error_msg})
-
-        user.f_name = user_data.get("f_name")
-        user.l_name = user_data.get("l_name")
-        if error_msg is None and 'image' not in request.files:
-            error_msg = "image missing"
-        try:
-            file = request.files["image"]
-            if error_msg is None and file.filename == '':
-                error_msg = "image not selected"
-        except Exception as e:
-            if error_msg is None:
-                error_msg = "server error to upload"
-        user.set_password(raw_password=user_data["password"])
-        done = user.save()
-        if error_msg is None:
-            file_extenstion = file.filename.split(".")[-1]
-            folder_path = f"{os.getcwd()}\\assets\\user\\user_pics\\"
-            final_path = f"{os.getcwd()}\\assets\\user\\user_pics\\{user.id}.{file_extenstion}"
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            file.save(final_path)
-        else: 
-            return jsonify({"message": error_msg}),401
-        
-        if not done :
-            return jsonify(
-                {
-                    "message": "an error accured while saving in database"
-                },
-                401
-            )
-        user.access_token = create_access_token(identity=user.id, fresh=True)
-        user.refresh_token = create_refresh_token(user.id)
-
-        return user
-
-
-
-
+                return abort(401,message ="an error accured while saving user in db")
+            
+        else:
+            return user
 
 
 
 
 @blp.route("/login", strict_slashes=False)
 class LoginUser(MethodView):
-    @blp.arguments(PlainUserSchema, location="form")
-    @blp.response(200, AdminSchema, description="Response for admin")
-    # @blp.alt_response(201, ClientSchema, description="Response for client")
+    @blp.arguments(PlainUserLoginSchema, location="form")
+    @blp.response(200, PlainUserLoginSchema, description="Response for admin")
     def post(self, user_data):
 
-        user = ClientModel.query.filter(
-            ClientModel.email_address == user_data["email_address"]
+        user = UserModel.query.filter(
+            UserModel.email_address == user_data["email_address"]
         ).first()
-        if not user :
-            user = AdminModel.query.filter(
-            ClientModel.email_address == user_data["email_address"]
-            ).first()
+
         # Verify user credentials
         if user and pbkdf2_sha256.verify(user_data["password"], user.password):
             # Create tokens
             user.access_token = create_access_token(identity=user.id, fresh=True)
             user.refresh_token = create_refresh_token(user.id)
-            
-            # Serialize response based on role
-            if user.role == "admin":
-                return AdminSchema().dump(user)  # Serialize using AdminSchema
+            if user.role == RoleEnum.admin:
+                return user # Serialize using AdminSchema
             else:
-                return ClientSchema().dump(user)  # Serialize using ClientSchema
+                return user # Serialize using ClientSchema
+        abort(404, message="Invalid credentials.")
 
-        # Abort with 401 if credentials are invalid
-        abort(401, message="Invalid credentials.")
+@blp.route("/user")
+class User(MethodView):
+    @jwt_required()
+    # @blp.response(200, ClientSchema)
+    def get(self):
+        user_id = get_jwt_identity()
+
+        user = UserModel.query.filter(UserModel.id == user_id).first()
+        if user is not None:
+            if user.role == RoleEnum.admin:
+                return AdminSchema().dump(user)
+            else:
+                return ClientSchema().dump(user)
+        else:
+            abort(404, message="Invalid credentials.")
+
+    @jwt_required()
+    @blp.arguments(PlainUserUpdateSchema, location="form")
+    @blp.response(200, PlainUserUpdateSchema)
+    def put(self, user_data):
+        user_id = get_jwt_identity()
+        user = UserModel.query.filter(UserModel.id == user_id).first()
+        print(user_data)
+        if user is not None:
+            if len(user_data) != 0:
+                user.update(**user_data)
+                return user
+            else:
+                abort(401, message="Enter data to update ")
+        else:
+            abort(404, message="Invalid credentials.")
+    
+@blp.route("/user/image")
+class UserImage(MethodView):
+    @jwt_required()
+    def put(self):
+        user_id = get_jwt_identity()
+        user = UserModel.query.filter(UserModel.id == user_id).first()
+        saved = user.save_image(request_data = request, folder_name="user_pics")
+        if isinstance(saved, str):
+            error_msg = saved
+            abort(401, message = error_msg)
+        user.save()
+        return send_file(user.image,mimetype='image/jpeg' ,as_attachment=True)
+    
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()
+        user = UserModel.query.filter(UserModel.id == user_id).first()
+        if user is not None:
+            return send_file(user.image,mimetype='image/jpeg' ,as_attachment=True)
+        else:
+            abort(404, message="image is not found")
+            
+@blp.route("/refresh")
+class TokenRefresh(MethodView):
+    @jwt_required(refresh=True)
+    def post(self):
+        current_user_id = get_jwt_identity()
+        new_token = create_access_token(identity=current_user_id, fresh=False)
+        refresh_token = create_refresh_token(current_user_id)
+        jti = get_jwt()['jti']
+        BLOCKLIST.add(jti)
+
+        return jsonify(
+            {
+                "access_token":new_token,
+                "refresh_token": refresh_token
+            }
+        ),201
+
+    
+

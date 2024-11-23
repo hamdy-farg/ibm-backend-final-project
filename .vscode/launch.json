@@ -5,13 +5,15 @@
       "type": "debugpy",
       "request": "launch",
       "module": "flask",
-      "env": { "FLASK_APP": "app\\__init__.py", "FLASK_DEBUG": "1" },
-      "args": ["run", "--no-debugger", "--no-reload"],
+      "env": {
+        "FLASK_APP": "app\\__init__.py",
+        "FLASK_DEBUG": "1"
+      },
+      "args": ["run"],
       "jinja": true,
-      "autoStartBrowser": false
-     
-    },
-   
+      "autoStartBrowser": false,
+      "justMyCode": false,
+      "showReturnValue": true
+    }
   ]
-  
 }

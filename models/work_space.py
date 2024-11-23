@@ -9,8 +9,8 @@ class WorkSpaceModel(BaseModel):
     description = db.Column(db.String(120), nullable= False, primary_key= False)
     location = db.Column(db.String(120), nullable= False,)
     photos = db.Column(db.JSON, nullable=True)
-
-    owner_id = db.Column(db.String(120), db.ForeignKey("admin.id"), nullable=False)
+    #
+    owner_id = db.Column(db.String(120), db.ForeignKey("user.id"), nullable=False)
     rooms  = db.relationship("RoomModel", back_populates="workSpace", cascade="all, delete" )   
-    owner = db.relationship("AdminModel", back_populates="workSpaces")
+    owner = db.relationship("UserModel", back_populates="workSpaces")
 
