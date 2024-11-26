@@ -36,7 +36,7 @@ class PlainWorkSpaceSchema(Schema):
         
 
 class PlainRoomSchema(Schema):
-    id = fields.Str(required=True)
+    id = fields.Str(dump_only=True)
     work_space_id = fields.Str(required=True)
     title = fields.Str(required=True)
     description = fields.Str(required=True)
@@ -46,6 +46,8 @@ class PlainRoomSchema(Schema):
     end_date = fields.Str(required=True)
     start_time = fields.Str(required=True)
     end_time = fields.Str(required=True)
+    image = fields.Str(dump_only=True)
+
 
     @validates("sart_date")
     @validates("end_date")
@@ -102,7 +104,17 @@ class PlainRoomSchema(Schema):
         
 class RoomSchema(Schema):
     room_id = fields.Str(required=True)
-    room = fields.Nested(PlainRoomSchema, dump_only=True)
+class RoomUpdateSchema(PlainRoomSchema):
+    room_id = fields.Str(required=True)
+    work_space_id = fields.Str()
+    title = fields.Str()
+    description = fields.Str()
+    price_per_hour = fields.Float()
+    capacity = fields.Int()
+    start_date = fields.Str()
+    end_date = fields.Str()
+    start_time = fields.Str()
+    end_time = fields.Str()
    
 
         
@@ -149,6 +161,10 @@ class PlainUserRegisterSchema(PlainUserLoginSchema):
         if len(value) < 2 or len(value) > 50:
             raise ValidationError("Name must be between 2 and 50 characters long.")
 
+class SuccessSchema(Schema):
+    code = fields.Str(required=True, description="Success code")
+    message = fields.Str(required=True, description="Success message")
+    success = fields.Bool(required=True, description="Indicates the success status")
 class PlainUserUpdateSchema(Schema):
     f_name = fields.Str()
     l_name = fields.Str()
