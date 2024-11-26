@@ -10,6 +10,7 @@ class BookModel(BaseModel):
     price = db.Column(db.Float(precision=2), nullable=False)  
     status = db.Column(db.Enum(StatusEnum), default = StatusEnum.inProgress)
     #
+    
     date =  db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
