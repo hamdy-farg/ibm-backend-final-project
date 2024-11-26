@@ -149,6 +149,7 @@ class Book(MethodView):
         book = BookModel.query.filter(BookModel.id == book_data.get("book_id")).first()
         if book is None:
             abort(404, message= "your booked with your id is not found")
+            
         start_time = book_data.get('start_time')
         end_time  = book_data.get('end_time')
         price = book_data.get("price")
