@@ -8,7 +8,7 @@ class WorkSpaceModel(BaseModel):
     title = db.Column(db.String(120), nullable= False, primary_key= False)
     description = db.Column(db.String(120), nullable= False, primary_key= False)
     location = db.Column(db.String(120), nullable= False,)
-    photos = db.Column(db.JSON, nullable=True)
+    image = db.Column(db.String(200), nullable=True)
     #
     owner_id = db.Column(db.String(120), db.ForeignKey("user.id"), nullable=False)
     rooms  = db.relationship("RoomModel", back_populates="workSpace", cascade="all, delete" )   

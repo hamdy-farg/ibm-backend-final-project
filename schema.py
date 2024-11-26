@@ -7,11 +7,13 @@ from werkzeug.utils import secure_filename
 
 from models.enum import RoleEnum
 
-
+TIMEFORMAT = "%H:%M:%S"
+DATEFORMAT =  "%Y-%m-%d"
 class PlainWorkSpaceSchema(Schema):
     title = fields.Str(required=True)
     description = fields.Str(required=True)
     location = fields.Str(required=True)
+    id = fields.Str(dump_only=True)
 
     @validates("title")
     def validate_title(self, value):
@@ -34,6 +36,7 @@ class PlainWorkSpaceSchema(Schema):
         
 
 class PlainRoomSchema(Schema):
+    id = fields.Str(required=True)
     work_space_id = fields.Str(required=True)
     title = fields.Str(required=True)
     description = fields.Str(required=True)
@@ -42,8 +45,25 @@ class PlainRoomSchema(Schema):
     start_date = fields.Str(required=True)
     end_date = fields.Str(required=True)
     start_time = fields.Str(required=True)
-    start_end = fields.Str(required=True)
+    end_time = fields.Str(required=True)
 
+    @validates("sart_date")
+    @validates("end_date")
+    def validate_date(self, value:str):
+        """Validate Start Date and end Date"""
+        try:
+            datetime.datetime.strptime(value, "%Y-%m-%d")
+        except Exception as e:
+            raise ValidationError("you must send date with formate of year-month-day") 
+    #
+    @validates("start_time")
+    @validates("end_time")
+    def validate_date(self, value:str):
+        """Validate Start Date and end Date"""
+        try:
+            datetime.datetime.strptime(value, "%H:%M:%S")
+        except Exception as e:
+            raise ValidationError("you must send time with formate of hour:month:seconds") 
     @validates("title")
     def validate_title(self, value):
         """Validate Title and last name."""
@@ -65,30 +85,25 @@ class PlainRoomSchema(Schema):
         print(start_date)
         if not start_date:
             raise ValidationError("you have to enter correct start date")
-        
-    @validates("end_date")
+    @validates("capacity")
     def validate_description(self, value):
-        """Validate end Date and last name."""
-        end_date = datetime.datetime.strptime(value, DATE_STAMP).date()
-        print(end_date)
-        if not end_date:
-            raise ValidationError("you have to enter correct end date")
-        
-    @validates("start_time")
+        """Validate capacity."""
+        try:
+            price = int(value)
+        except Exception as e:
+            raise ValidationError("you must send capacity in integer formate")
+    @validates("price_per_hour")
     def validate_description(self, value):
-        """Validate Start Date and last name."""
-        start_date = datetime.datetime.strptime(value, TIME_STAMP).date()
-        print(start_date)
-        if not start_date:
-            raise ValidationError("you have to enter correct start date")
+        """Validate price per hour."""
+        try:
+            price = float(value)
+        except Exception as e:
+            raise ValidationError("you must send price in flaot formate")
         
-    @validates("end_time")
-    def validate_description(self, value):
-        """Validate end Date and last name."""
-        end_date = datetime.datetime.strptime(value, TIME_STAMP).time()
-        print(end_date)
-        if not end_date:
-            raise ValidationError("you have to enter correct end date")
+class RoomSchema(Schema):
+    room_id = fields.Str(required=True)
+    room = fields.Nested(PlainRoomSchema, dump_only=True)
+   
 
         
 class PlainUserLoginSchema(Schema):
@@ -158,6 +173,7 @@ class PlainUserUpdateSchema(Schema):
                 raise ValidationError("Name must contain only alphabetic characters.")
             if len(value) < 2 or len(value) > 50:
                 raise ValidationError("Name must be between 2 and 50 characters long.")
+
 
 
 class PlainWorkSpaceImagesSchema(Schema):

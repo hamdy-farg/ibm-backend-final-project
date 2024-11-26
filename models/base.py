@@ -100,14 +100,7 @@ class BaseModel(db.Model):
                 - user if successed
                 - if fial  error message
         """
-       
         # print(request_data.files['image'].read())
-        
-            
-  
-       
-        
-
         try:
             print("1")
             checked = self.check_image(request_data=request_data, file=file)

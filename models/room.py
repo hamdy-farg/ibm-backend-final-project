@@ -7,14 +7,14 @@ class RoomModel(BaseModel):
     description = db.Column(db.String(120), nullable= False, primary_key= False)
     price_per_hour = db.Column(db.Float(precision=2), nullable=False)  
     capacity = db.Column(db.Integer(), nullable=False)  
-    photos = db.Column(db.JSON, nullable=True)
+    image = db.Column(db.String(200), nullable=True)
     #
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
     #
-    work_space_id =db.Column(db.String(120), db.ForeignKey('workSpace.id'))
+    work_space_id =db.Column(db.String(120), db.ForeignKey('workSpace.id'), nullable=False)
     #
     workSpace = db.relationship("WorkSpaceModel", back_populates="rooms")
     bookings = db.relationship("BookModel", back_populates="room", lazy="dynamic", cascade="all, delete")
