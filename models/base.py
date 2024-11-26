@@ -28,7 +28,6 @@ class BaseModel(db.Model):
             db.session.rollback()
             print(e)
             return False
-        
 
     def delete(self):
         """ delete the object from database"""
@@ -91,13 +90,14 @@ class BaseModel(db.Model):
             return file
         else :
             return "you have to pass file or give request"
-    def save_image(self, folder_name, request_data = None, file= None ):
+    def save_image(self, folder_name:str, request_data = None, file= None ):
         """ save_image funcaiton
             - arguments
-                - file contains the image
-                - user 
+                - folder name required
+                - request data = None
+                - file = None
             - Return
-                - user if successed
+                - self if successed
                 - if fial  error message
         """
 
@@ -126,9 +126,19 @@ class BaseModel(db.Model):
             print(e)
             return "error accured while saving image"
         return self
-
+    def convert_image_to_link(self, route:str, image_id:str):
+        """ convert any image id to link
+            
+            - ARGUMENTS
+                - route as /room/image/
+                - image_id 
+            - RETURN
+                - str image link
+        """
+        
+        image_link =  f"{os.getenv("LOCALHOST","http://127.0.0.1:5000")}"+ f"{route}"+f"{image_id}"
+        return image_link
     def validate_user_data(self, user_data, request):
-
         """ validate uesr data to save user_data into db
             - ARGUMENTS:
                 - user 

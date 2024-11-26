@@ -1,9 +1,11 @@
 import os
+from resource.booked import blp as BookedBluePrint
 from resource.room import blp as RoomBluePrint
 from resource.user import blp as UserBluePrint
 from resource.work_space import blp as WorkSpaceBluePrint
 
 from flask import Flask, jsonify
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_smorest import Api
 
@@ -21,18 +23,18 @@ class Config(object):
     OPENAPI_URL_PREFIX =  "/"
     OPENAPI_SWAGGER_UI_PATH = '/swagger'
     OPENAPI_SWAGGER_UI_URL = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist/' 
-    SQLALCHEMY_DATABASE_URI = "mysql://avnadmin:AVNS_ubxukWZBkNZDpbXVqm4@mysql-9922e3a-farghamdy72-61e3.b.aivencloud.com:25133/defaultdb"
-# 'mysql+mysqlconnector://root:0000@127.0.0.1:3306/bankdb1'
+    SQLALCHEMY_DATABASE_URI =  'mysql+mysqlconnector://root:0000@127.0.0.1:3306/bankdb1'
+# "mysql://avnadmin:AVNS_ubxukWZBkNZDpbXVqm4@mysql-9922e3a-farghamdy72-61e3.b.aivencloud.com:25133/defaultdb"
     SQLALCHEMY_TRACK_MODIFICATION = False
     #JWT config
     JWT_SECRET_KEY = "105119963872580105811750424767882539424"
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'connect_args': {
-            'ssl': {
-                'ssl_ca': "C:\\Users\\spider\\Desktop\\IBM_BACKEND_PROJECT\\ca.pem"  
-            }
-        }
-    }
+    # SQLALCHEMY_ENGINE_OPTIONS = {
+    #     'connect_args': {
+    #         'ssl': {
+    #             'ssl_ca': "C:\\Users\\spider\\Desktop\\IBM_BACKEND_PROJECT\\ca.pem"  
+    #         }
+    #     }
+    # }
 
 def create_app():
     """" create app
@@ -49,6 +51,8 @@ def create_app():
     api.register_blueprint(UserBluePrint)
     api.register_blueprint(WorkSpaceBluePrint)
     api.register_blueprint(RoomBluePrint)
+    api.register_blueprint(BookedBluePrint)
+    
 
 
     
@@ -62,6 +66,8 @@ def create_app():
 app = create_app()
 
 jwt = JWTManager(app)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
 
 @jwt.additional_claims_loader
 def add_claims_to_jwt(identity):

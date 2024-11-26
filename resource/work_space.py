@@ -8,7 +8,8 @@ from flask_smorest import Blueprint, abort
 
 from models.user import UserModel
 from models.work_space import WorkSpaceModel
-from schema import PlainWorkSpaceImagesSchema, PlainWorkSpaceSchema
+from schema import (PlainGetWorkSpace, PlainUpdateWorkSpaceSchema,
+                    PlainWorkSpaceSchema, SuccessSchema)
 
 blp = Blueprint("workspace", "workspace", description="CRUD operation on workspace")
 
@@ -18,9 +19,7 @@ class WorkSpcae(MethodView):
     @blp.arguments(PlainWorkSpaceSchema, location="form")
     @blp.response(201, PlainWorkSpaceSchema)
     def post(self, work_space_data):
-        print("ernter")
         jwt = get_jwt()
-       
         if not jwt.get("is_admin"):
             abort(401, message="Admin privilage required")
         owner_id = get_jwt_identity()
@@ -33,19 +32,72 @@ class WorkSpcae(MethodView):
             abort(401 , message= error_msg)
         work_space_saved = work_space.save()
         if work_space_saved:
+
+                work_space.image = work_space.convert_image_to_link(route="/workspace/image/", image_id =work_space.id)
                 return work_space
         else:
             return abort(401,message ="an error accured while saving user in db")
 
     
+    @jwt_required()
+    @blp.arguments(PlainUpdateWorkSpaceSchema, location="form")
+    @blp.response(200, PlainUpdateWorkSpaceSchema)
+    def put(self, work_space_data):
+        user = get_jwt_identity()
+        jwt = get_jwt()
+        if not jwt.get("is_admin"):
+            abort(401, message="Admin privilage required")
+        work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_data.get("work_space_id")).first()
+        if request.files["image"] is not None:
+            work_space_saved = work_space.save_image(folder_name='user/user_pics', request_data = request)
+            if isinstance(work_space_saved,str):
+                error_message = work_space_saved 
+                abort(500, message= error_message)
+        work_space_saved = work_space.update(**work_space_data)
+        if work_space_saved:
+            work_space.image = work_space.convert_image_to_link(route='/workspace/image/', image_id =work_space.id)
+            return work_space
+        else:
+            abort(500, message="error accured while updating in db")
+    @jwt_required()
+    @blp.arguments(PlainGetWorkSpace, location="form")
+    @blp.response(200, PlainUpdateWorkSpaceSchema)
+    def get(self, work_space_data):
+        jwt = get_jwt()
+        if not jwt.get("is_admin"):
+            abort(401, message="Admin privilage required")
+        work_space_id = work_space_data.get("work_space_id")
+        work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_id).first()
+        work_space.image = work_space.convert_image_to_link(route = '/workspace/image/', image_id =work_space.id)
+        return work_space
+    @jwt_required()
+    @blp.arguments(PlainGetWorkSpace, location="form")
+    @blp.response(200, SuccessSchema)
+    def delete(self, work_space_data):
+        jwt = get_jwt()
+        if not jwt.get("is_admin"):
+            abort(401, message="Admin privilage required")
+        work_space_id = work_space_data.get("work_space_id")
+        work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_id).first()
+        work_space_deleted = work_space.delete()
+        if work_space_deleted:
+            return {
+                "code":200,
+                "message": "deleted successfully",
+                "success":True
+            }
+        else:
+            abort(500, messsage="error accured while saving in db")
+
+    
+
+
+
+
 @blp.route("/workspace/image/<string:work_space_id>", strict_slashes=False)
 class WorkSpaceImages(MethodView):
-    # @jwt_required()
-    # @blp.arguments(PlainWorkSpaceImagesSchema)
     def get(self, work_space_id):
-        # owner_id = get_jwt_identity()
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_id).first()
-
         if work_space is not None:
             imageName = os.path.join(os.getcwd(),work_space.image)
             return send_file(imageName, mimetype='image/jpeg')

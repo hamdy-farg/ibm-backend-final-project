@@ -5,7 +5,8 @@ import re
 from marshmallow import Schema, ValidationError, fields, validates
 from werkzeug.utils import secure_filename
 
-from models.enum import RoleEnum
+from models import WorkSpaceModel
+from models.enum import RoleEnum, StatusEnum
 
 TIMEFORMAT = "%H:%M:%S"
 DATEFORMAT =  "%Y-%m-%d"
@@ -14,6 +15,7 @@ class PlainWorkSpaceSchema(Schema):
     description = fields.Str(required=True)
     location = fields.Str(required=True)
     id = fields.Str(dump_only=True)
+    image = fields.Str(dump_only=True)
 
     @validates("title")
     def validate_title(self, value):
@@ -34,6 +36,27 @@ class PlainWorkSpaceSchema(Schema):
         if len(value) < 20:
             raise ValidationError("this is not valid location")
         
+class PlainGetWorkSpace(Schema):
+    work_space_id = fields.Str(required=True)
+
+    @validates("work_space_id")
+    def validate_work_space_id(self, value):
+        work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == value).first()
+        if work_space is None:
+            raise ValidationError("your workspace is not found")
+        
+class PlainUpdateWorkSpaceSchema(PlainWorkSpaceSchema):
+    work_space_id = fields.Str(required=True)
+    title = fields.Str()
+    description = fields.Str()
+    location = fields.Str()
+    @validates("work_space_id")
+    def validate_work_space_id(self, value):
+        work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id ==value).first()
+        if work_space is None:
+            raise ValidationError("this id is not found")
+        
+
 
 class PlainRoomSchema(Schema):
     id = fields.Str(dump_only=True)
@@ -94,13 +117,7 @@ class PlainRoomSchema(Schema):
             price = int(value)
         except Exception as e:
             raise ValidationError("you must send capacity in integer formate")
-    @validates("price_per_hour")
-    def validate_description(self, value):
-        """Validate price per hour."""
-        try:
-            price = float(value)
-        except Exception as e:
-            raise ValidationError("you must send price in flaot formate")
+   
         
 class RoomSchema(Schema):
     room_id = fields.Str(required=True)
@@ -117,8 +134,11 @@ class RoomUpdateSchema(PlainRoomSchema):
     end_time = fields.Str()
    
 
-        
+class AuthModelSchema(Schema):
+    access_token = fields.Str(dump_only=True)
+    refresh_token = fields.Str(dump_only=True)
 class PlainUserLoginSchema(Schema):
+    id = fields.Str(dump_only=True)
     email_address = fields.Str(required=True)
     password = fields.Str(required=True, load_only=True)
     access_token = fields.Str(dump_only=True)
@@ -151,6 +171,7 @@ class PlainUserRegisterSchema(PlainUserLoginSchema):
     f_name = fields.Str(required=True)
     l_name = fields.Str(required=True)
     phone_number = fields.Str(required=True)
+    image = fields.Str(dump_only=True)
     
     @validates("f_name")
     @validates("l_name")
@@ -191,24 +212,68 @@ class PlainUserUpdateSchema(Schema):
                 raise ValidationError("Name must be between 2 and 50 characters long.")
 
 
-
-class PlainWorkSpaceImagesSchema(Schema):
-    photos = fields.Dict(dump_only=True)
 class PlainBookedSchema(Schema):
+    id = fields.Str(dump_only=True)
     client_id = fields.Str(required=True)
     room_id = fields.Str(required=True)
     price = fields.Float(required=True)
-    date_time_start = fields.Str(required=True)
-    date_time_end = fields.Str(required=True)
+    date =  fields.Str(required=True)
+    start_time = fields.Str(required=True)
+    end_time = fields.Str(required=True)
+    status = fields.Enum(enum=StatusEnum)
+
+   
+    @validates("date")
+    def validate_date(self, value:str):
+        """Validate Start Date and end Date"""
+        try:
+            datetime.datetime.strptime(value, "%Y-%m-%d")
+        except Exception as e:
+            raise ValidationError("you must send date with formate of year-month-day") 
+    #
+    @validates("start_time")
+    @validates("end_time")
+    def validate_date(self, value:str):
+        """Validate Start Date and end Date"""
+        try:
+            datetime.datetime.strptime(value, "%H:%M:%S")
+        except Exception as e:
+            raise ValidationError("you must send time with formate of hour:month:seconds") 
+    
+    @validates("price")
+    def validate_description(self, value):
+        """Validate price per hour."""
+        try:
+            price = float(value)
+        except Exception as e:
+            raise ValidationError("you must send price in flaot formate")
+class BookUpdateSchema(PlainBookedSchema):
+    book_id = fields.Str(required=True)
+    client_id = fields.Str(dump_only=True)#!
+    room_id = fields.Str(dump_only=True)#!
+class BookDeleteSchema(Schema):
+    book_id = fields.Str(required=True)
 
 
-class AdminSchema(PlainUserRegisterSchema):
-    workSpaces = fields.List(fields.Nested(PlainWorkSpaceSchema),dump_only=True)
+class BookListSchema(Schema):
+    client_id = fields.Str(required=True)
+    booked = fields.List(fields.Nested(PlainBookedSchema), dump_only=True)
+    
+class BookedSchema(Schema):
+    date = fields.Str(required=True)
+    room_id = fields.Str(required=True)
+    booked = fields.List(fields.Nested(PlainBookedSchema), dump_only=True)
+    
+
+    
+# class AdminSchema(PlainUserRegisterSchema):
+
+    # workSpaces = fields.List(fields.Nested(PlainWorkSpaceSchema),dump_only=True)
 
 
 
-class ClientSchema(PlainUserRegisterSchema):
+# class ClientSchema(PlainUserRegisterSchema):
 
-    booked = fields.List(fields.Nested(PlainBookedSchema),dump_only=True)
+    # booked = fields.List(fields.Nested(PlainBookedSchema),dump_only=True)
 
     

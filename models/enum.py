@@ -1,4 +1,6 @@
 from enum import Enum
+
+
 class RoleEnum(Enum):
     client = "client"
     admin = "admin"
@@ -6,4 +8,4 @@ class RoleEnum(Enum):
 class StatusEnum(Enum):
     approved = "aproved"
     rejected = "rejected"
-    inProgress = "rejected"
+    inProgress = "inProgress"
