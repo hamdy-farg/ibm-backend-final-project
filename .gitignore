@@ -1,5 +1,5 @@
 __pycache__
-./assets/
+# ./assets/
 .block_list
 *.pyc
 assets/
