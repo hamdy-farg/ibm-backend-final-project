@@ -7,7 +7,7 @@ from sqlalchemy import and_, or_
 from models import BookModel, RoleEnum, RoomModel, UserModel
 from schema import (DATEFORMAT, TIMEFORMAT, BookDeleteSchema, BookedSchema,
                     BookListSchema, BookUpdateSchema, PlainBookedSchema,
-                    SuccessSchema)
+                    RoomsSchema, SuccessSchema)
 
 blp = Blueprint("Book", "book", description="CRUD opration to make booking")
 def get_avialable_time(room_id: str, date:str):
@@ -193,3 +193,18 @@ class GetAll(MethodView):
         if client is None:
             abort(404, message= "your client with your id is not found")
         return client
+@blp.route("/room/book")
+class GetAll(MethodView):
+    @blp.arguments(BookListSchema, location="form")
+    @blp.response(200, BookListSchema)
+    def get(self, book_data):
+        room = RoomModel.query.filter(RoomModel.id == book_data.get("room_id")).first()
+        if room is not None:
+            roomBookings = room.bookings.all()
+            if roomBookings is not None:
+                return  {
+                    "room_id": room.id,
+                    "roomBookings": roomBookings
+                }
+        else:
+            abort(404, message="your room is not found")

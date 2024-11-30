@@ -8,7 +8,7 @@ from models.enum import RoleEnum, StatusEnum
 class UserModel(BaseModel):
     # __abstract__= True 
     __tablename__ = "user"
-    email_address = db.Column(db.String(80), nullable=True, unique=True)
+    email_address = db.Column(db.String(80), nullable=False, unique=True)
     phone_number = db.Column(db.String(80), nullable=True, unique=True)
     address = db.Column(db.Text, nullable=True)
     f_name = db.Column(db.String(80), nullable=True)

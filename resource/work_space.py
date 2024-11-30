@@ -6,10 +6,9 @@ from flask.views import MethodView
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_smorest import Blueprint, abort
 
-from models.user import UserModel
-from models.work_space import WorkSpaceModel
+from models import RoleEnum, UserModel, WorkSpaceModel
 from schema import (PlainGetWorkSpace, PlainUpdateWorkSpaceSchema,
-                    PlainWorkSpaceSchema, SuccessSchema)
+                    PlainWorkSpaceSchema, SuccessSchema, WorkSpaceSchema)
 
 blp = Blueprint("workspace", "workspace", description="CRUD operation on workspace")
 
@@ -25,7 +24,6 @@ class WorkSpcae(MethodView):
         owner_id = get_jwt_identity()
         owner = UserModel.query.filter(UserModel.id == owner_id).first()
         work_space = WorkSpaceModel(**work_space_data, owner = owner)
-    
         work_space_image_saved = work_space.save_image(request_data=request, folder_name="work_space_pics")
         if  isinstance(work_space_image_saved, str):
             error_msg = work_space_image_saved
@@ -49,7 +47,7 @@ class WorkSpcae(MethodView):
             abort(401, message="Admin privilage required")
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_data.get("work_space_id")).first()
         if request.files["image"] is not None:
-            work_space_saved = work_space.save_image(folder_name='user/user_pics', request_data = request)
+            work_space_saved = work_space.save_image(folder_name='user/work_space_pics', request_data = request)
             if isinstance(work_space_saved,str):
                 error_message = work_space_saved 
                 abort(500, message= error_message)
@@ -59,6 +57,8 @@ class WorkSpcae(MethodView):
             return work_space
         else:
             abort(500, message="error accured while updating in db")
+
+    
     @jwt_required()
     @blp.arguments(PlainGetWorkSpace, location="form")
     @blp.response(200, PlainUpdateWorkSpaceSchema)
@@ -70,6 +70,8 @@ class WorkSpcae(MethodView):
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_id).first()
         work_space.image = work_space.convert_image_to_link(route = '/workspace/image/', image_id =work_space.id)
         return work_space
+
+
     @jwt_required()
     @blp.arguments(PlainGetWorkSpace, location="form")
     @blp.response(200, SuccessSchema)
@@ -102,4 +104,51 @@ class WorkSpaceImages(MethodView):
             imageName = os.path.join(os.getcwd(),work_space.image)
             return send_file(imageName, mimetype='image/jpeg')
         return jsonify({"": ""})
+
+
+
+
+
+@blp.route("/client/workspaces", strict_slashes=False)
+class UserWorkSpaces(MethodView):
+    @jwt_required()
+    @blp.response(200, WorkSpaceSchema)
+    def get(self):
+        user_id = get_jwt_identity()
+        jwt = get_jwt()
+        if jwt.get("is_admin"):
+            abort(401, message="client privilage required")
+        workSpace = WorkSpaceModel.query.all()
+        #
+        work_spaces = workSpace
+        workSpaceList = []
+        if work_spaces is not None:
+            for work_space in work_spaces:
+                work_space.image = work_space.convert_image_to_link(route='/workspace/image/', image_id =work_space.id)
+                workSpaceList.append(work_space)
+            return {"workSpaces":workSpaceList, }
+        return jsonify({"data": "there is not work space created until now"})
     
+     
+
+@blp.route("/admin/workspaces", strict_slashes=False)
+class UserWorkSpaces(MethodView):
+    @jwt_required()
+    @blp.response(200, WorkSpaceSchema)
+    def get(self):
+        user_id = get_jwt_identity()
+        jwt = get_jwt()
+        if not jwt.get("is_admin"):
+            abort(401, message="Admin privilage required")
+        admin = UserModel.query.filter(UserModel.id == user_id, UserModel.role == RoleEnum.admin).first()
+        #
+        work_spaces = admin.workSpaces.all()
+        workSpaceList = []
+        if work_spaces is not None:
+            for work_space in work_spaces:
+                work_space.image = work_space.convert_image_to_link(route='/workspace/image/', image_id =work_space.id)
+                workSpaceList.append(work_space)
+            return {"workSpaces":workSpaceList}
+        return jsonify({"data": "there is not work space created until now"})
+    
+     

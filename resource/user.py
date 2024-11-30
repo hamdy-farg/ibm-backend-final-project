@@ -22,7 +22,7 @@ from block_list import BLOCKLIST
 @blp.route("/register", strict_slashes=False)
 class UserRegister(MethodView):
     @blp.arguments(PlainUserRegisterSchema, location="form")
-    @blp.response(201, AuthModelSchema)
+    @blp.response(201, PlainUserRegisterSchema)
     def post(self, user_data):
         error_msg = None
         user = UserModel()
@@ -41,7 +41,9 @@ class UserRegister(MethodView):
             user.access_token = create_access_token(identity=user.id, fresh=True)
             user.refresh_token = create_refresh_token(user.id)
             user_saved = user.save()
+
             if user_saved:
+                user.image = user.convert_image_to_link(route="/user/image/",image_id= user.id)
                 return user
             else:
                 return abort(401,message ="an error accured while saving user in db")
@@ -55,7 +57,7 @@ class UserRegister(MethodView):
 @blp.route("/login", strict_slashes=False)
 class LoginUser(MethodView):
     @blp.arguments(PlainUserLoginSchema, location="form")
-    @blp.response(200, AuthModelSchema, description="Response for admin")
+    @blp.response(200, PlainUserRegisterSchema, description="Response for admin")
     def post(self, user_data):
 
         user = UserModel.query.filter(
@@ -67,6 +69,8 @@ class LoginUser(MethodView):
             # Create tokens
             user.access_token = create_access_token(identity=user.id, fresh=True)
             user.refresh_token = create_refresh_token(user.id)
+            user.image = user.convert_image_to_link(route="/user/image/", image_id=user.id)
+            print(user.image)
             if user.role == RoleEnum.admin:
                 return user # Serialize using AdminSchema
             else:
@@ -92,10 +96,32 @@ class User(MethodView):
     def put(self, user_data):
         user_id = get_jwt_identity()
         user = UserModel.query.filter(UserModel.id == user_id).first()
+        #
+        
+        if user_data.get("phone_number") != None:
+            user_check = UserModel.query.filter(UserModel.phone_number == user_data.get("phone_number")).first()
+
+            if user_check != None and user.phone_number != user_data.get("phone_number"):
+                abort(401, message="phone number is taken input another")
+        if user_data.get("email_address") != None:
+            user_check = UserModel.query.filter(UserModel.email_address == user_data.get("email_address")).first()
+            if user_check != None and user.email_address != user_data.get("email_address"):
+                abort(401, message="email  is taken input another")
+        #
+
         if user is not None:
-            if len(user_data) != 0:
+            if len(user_data) != 0 or request.files["image"] is not None:
+                file = request.files.get("image")
+                if file is not None:
+                    user_saved = user.save_image(folder_name='user_pics', request_data = request)
+                    if isinstance(user_saved,str):
+                        error_message = user_saved 
+                        print("enter4")
+                        abort(500, message= error_message)
+                
                 user_saved = user.update(**user_data)
                 if user_saved:
+                    user.image = user.convert_image_to_link(route="/user/image/", image_id=user.id)
                     return user
                 abort(401, message="""an error accured while saving in db becuase of you want to save email or phone """)
 
@@ -139,10 +165,9 @@ class UserImage(MethodView):
     #     return send_file(user.image,mimetype='image/jpeg' ,as_attachment=True)
     def get(self, user_id):
         # user_id = get_jwt_identity()
-        print("hiii", user_id)
         user = UserModel.query.filter(UserModel.id == user_id).first()
         if user is not None:
-            file = os.path.join(os.getcwd(),f"{user.image}")
+            file = os.path.join(os.getcwd(),"assets", "user", "user_pics",f"{user.image}")
             return send_file(file, mimetype='image/jpeg' )
         else:
             abort(404, message="image is not found")

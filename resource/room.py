@@ -8,7 +8,7 @@ from flask_smorest import Blueprint, abort
 
 from models import BookModel, RoomModel, WorkSpaceModel
 from schema import (DATEFORMAT, TIMEFORMAT, PlainRoomSchema, RoomSchema,
-                    RoomUpdateSchema, SuccessSchema)
+                    RoomsSchema, RoomUpdateSchema, SuccessSchema)
 
 blp = Blueprint("Room", "room", description='CRUD on rooms')
 
@@ -86,6 +86,9 @@ class Room(MethodView):
             return room
         else:
             abort(404, "your room is not found")
+
+
+    
     @blp.arguments(RoomUpdateSchema, location="form")
     @blp.response(200, PlainRoomSchema)
     def put(self, room_data):
@@ -123,8 +126,22 @@ class Room(MethodView):
 class RoomImage(MethodView):
     def get(self, room_id):
         room = RoomModel.query.filter(RoomModel.id == room_id).first()
-        image = os.path.join(os.getcwd(), room.image)
-        return send_file(image,mimetype='image/jpeg')
+        image = os.path.join(os.getcwd(),"assets", "user","room_pics", room.image)
+        return send_file(image, mimetype='image/jpeg')
 
 
-
+@blp.route('/workspace/rooms')
+class GetAllWorkSpaceRoom(MethodView):
+    @blp.arguments(RoomsSchema, location="form")
+    @blp.response(200, RoomsSchema)
+    def get(self, room_data):
+            workSpace   = WorkSpaceModel.query.filter(WorkSpaceModel.id == room_data.get("work_space_id")).first()
+            RoomsList = []
+            if workSpace is not None:
+                workSpaceRoomsList =  workSpace.rooms
+                print(workSpaceRoomsList)
+                for workSpaceRoom in workSpaceRoomsList:
+                    workSpaceRoom.image = f"{os.getenv("LOCALHOST","http://127.0.0.1:5000/")}"+ "room/image/"+f"{workSpaceRoom.id}"
+                    RoomsList.append(workSpaceRoom)
+                return {"work_space_id":workSpace.id,"rooms":RoomsList}
+            abort(404,message =  "your work space is not found")

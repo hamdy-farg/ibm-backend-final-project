@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 
+from flask_smorest import abort
 from marshmallow import Schema, ValidationError, fields, validates
 from werkzeug.utils import secure_filename
 
@@ -121,6 +122,9 @@ class PlainRoomSchema(Schema):
         
 class RoomSchema(Schema):
     room_id = fields.Str(required=True)
+class RoomsSchema(Schema):
+    work_space_id =fields.Str(required=True)
+    rooms = fields.List(fields.Nested(PlainRoomSchema),dump_only=True)
 class RoomUpdateSchema(PlainRoomSchema):
     room_id = fields.Str(required=True)
     work_space_id = fields.Str()
@@ -151,36 +155,35 @@ class PlainUserLoginSchema(Schema):
         """Validate the email address format."""
         email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         if not re.match(email_regex, value):
-            raise ValidationError("Invalid email address format.")
+            abort(400, message="Invalid email address format.")
     
     @validates("password")
     def validate_password(self, value):
         """Validate the password for strength."""
         if len(value) < 8 or len(value) > 32:
-            raise ValidationError("Password must be between 8 and 32 characters long.")
+            abort(400, message="Password must be between 8 and 32 characters long.")
         if not any(char.isdigit() for char in value):
-            raise ValidationError("Password must contain at least one digit.")
+           abort(400, message="Password must contain at least one digit.")
         if not any(char.isupper() for char in value):
-            raise ValidationError("Password must contain at least one uppercase letter.")
+           abort(400, message="Password must contain at least one uppercase letter.")
         if not any(char.islower() for char in value):
-            raise ValidationError("Password must contain at least one lowercase letter.")
+            abort(400, "Password must contain at least one lowercase letter.")
         if not any(char in "!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?`~" for char in value):
-            raise ValidationError("Password must contain at least one special character.")
+           abort(400, message="Password must contain at least one special character.")
+           
 class PlainUserRegisterSchema(PlainUserLoginSchema):
     id = fields.Str(dump_only=True)
     f_name = fields.Str(required=True)
     l_name = fields.Str(required=True)
-    phone_number = fields.Str(required=True)
+    phone_number = fields.Str(dump_only=True)
     image = fields.Str(dump_only=True)
     
     @validates("f_name")
     @validates("l_name")
     def validate_name(self, value):
         """Validate first and last name."""
-        if not value.isalpha():
-            raise ValidationError("Name must contain only alphabetic characters.")
         if len(value) < 2 or len(value) > 50:
-            raise ValidationError("Name must be between 2 and 50 characters long.")
+            abort(400, message="Name must be between 2 and 50 characters long.")
 
 class SuccessSchema(Schema):
     code = fields.Str(required=True, description="Success code")
@@ -191,6 +194,7 @@ class PlainUserUpdateSchema(Schema):
     l_name = fields.Str()
     email_address = fields.Str()
     phone_number = fields.Str()
+    image = fields.Str()
 
     @validates("email_address")
     def validate_email(self, value):
@@ -198,7 +202,7 @@ class PlainUserUpdateSchema(Schema):
         if len(value) != 0 and value != "":
             email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
             if not re.match(email_regex, value):
-                raise ValidationError("Invalid email address format.")
+                abort(400, message="Invalid email address format.")
 
     @validates("f_name")
     @validates("l_name")
@@ -206,10 +210,8 @@ class PlainUserUpdateSchema(Schema):
         """Validate first and last name."""
 
         if len(value) != 0  and value != "":
-            if not value.isalpha():
-                raise ValidationError("Name must contain only alphabetic characters.")
             if len(value) < 2 or len(value) > 50:
-                raise ValidationError("Name must be between 2 and 50 characters long.")
+                abort(400, message="Name must be between 2 and 50 characters long.")
 
 
 class PlainBookedSchema(Schema):
@@ -256,8 +258,8 @@ class BookDeleteSchema(Schema):
 
 
 class BookListSchema(Schema):
-    client_id = fields.Str(required=True)
-    booked = fields.List(fields.Nested(PlainBookedSchema), dump_only=True)
+    room_id = fields.Str(required=True)
+    roomBookings = fields.List(fields.Nested(PlainBookedSchema), dump_only=True)
     
 class BookedSchema(Schema):
     date = fields.Str(required=True)
@@ -265,7 +267,9 @@ class BookedSchema(Schema):
     booked = fields.List(fields.Nested(PlainBookedSchema), dump_only=True)
     
 
-    
+class WorkSpaceSchema(Schema):
+    workSpaces = fields.List(fields.Nested(PlainWorkSpaceSchema), dump_only=True)
+
 # class AdminSchema(PlainUserRegisterSchema):
 
     # workSpaces = fields.List(fields.Nested(PlainWorkSpaceSchema),dump_only=True)
