@@ -2,5 +2,5 @@ __pycache__
 # ./assets/
 .block_list
 *.pyc
-assets/
+# assets/
 # venv/
