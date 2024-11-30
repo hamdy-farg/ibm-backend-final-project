@@ -21,13 +21,19 @@ from block_list import BLOCKLIST
 
 @blp.route("/register", strict_slashes=False)
 class UserRegister(MethodView):
+
+    #
     @blp.arguments(PlainUserRegisterSchema, location="form")
     @blp.response(201, PlainUserRegisterSchema)
     def post(self, user_data):
         error_msg = None
         user = UserModel()
-      
+        #if user have this secret so create admin account
+        if user_data.get("secret") == "1234":
+            user.role = RoleEnum.admin
+        #
         validate = user.validate_user_data(user_data=user_data, request= request)
+
         if validate  is not None and isinstance(validate, str):
             error_msg = validate
             return abort(401, message = error_msg)
@@ -54,6 +60,9 @@ class UserRegister(MethodView):
 
 
 
+
+
+#
 @blp.route("/login", strict_slashes=False)
 class LoginUser(MethodView):
     @blp.arguments(PlainUserLoginSchema, location="form")

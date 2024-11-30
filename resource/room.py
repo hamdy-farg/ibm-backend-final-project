@@ -80,6 +80,7 @@ class Room(MethodView):
     @blp.arguments(RoomSchema, location="form")
     @blp.response(200, PlainRoomSchema)
     def get(self, room_data):
+
         room = RoomModel.query.filter(RoomModel.id == room_data.get("room_id")).first()
         if room is not None:
             room.image = f"{os.getenv("LOCALHOST","http://127.0.0.1:5000/")}"+ "room/image/"+f"{room.id}"
@@ -88,10 +89,14 @@ class Room(MethodView):
             abort(404, "your room is not found")
 
 
-    
+    @jwt_required()
     @blp.arguments(RoomUpdateSchema, location="form")
     @blp.response(200, PlainRoomSchema)
     def put(self, room_data):
+        """ to update one room by id"""
+        jwt = get_jwt()
+        if not jwt.get("is_admin"):
+            abort(400, message= "admin provilage are required")
         room = RoomModel.query.filter(RoomModel.id == room_data.get("room_id")).first()
         if room is None:
             abort(404, "your room is not found")
@@ -108,6 +113,10 @@ class Room(MethodView):
     @blp.arguments(RoomSchema, location="form")
     @blp.response(200, SuccessSchema)
     def delete(self, room_data):
+        """ delete specific work space"""
+        jwt = get_jwt()
+        if not jwt.get("is_admin"):
+            abort(400, message= "admin provilage are required")
         room = RoomModel.query.filter(RoomModel.id == room_data.get("room_id")).first()
         if room is not None:
             room_deleted = room.delete()
@@ -121,13 +130,7 @@ class Room(MethodView):
                 return abort(200, message = "problem accured in server while deleteing")
         else:
             abort(404, message = "your room is not found")
-        
-@blp.route("/room/image/<string:room_id>")
-class RoomImage(MethodView):
-    def get(self, room_id):
-        room = RoomModel.query.filter(RoomModel.id == room_id).first()
-        image = os.path.join(os.getcwd(),"assets", "user","room_pics", room.image)
-        return send_file(image, mimetype='image/jpeg')
+ 
 
 
 @blp.route('/workspace/rooms')
@@ -145,3 +148,12 @@ class GetAllWorkSpaceRoom(MethodView):
                     RoomsList.append(workSpaceRoom)
                 return {"work_space_id":workSpace.id,"rooms":RoomsList}
             abort(404,message =  "your work space is not found")
+
+
+       
+@blp.route("/room/image/<string:room_id>")
+class RoomImage(MethodView):
+    def get(self, room_id):
+        room = RoomModel.query.filter(RoomModel.id == room_id).first()
+        image = os.path.join(os.getcwd(),"assets", "user","room_pics", room.image)
+        return send_file(image, mimetype='image/jpeg')

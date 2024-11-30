@@ -111,13 +111,11 @@ class WorkSpaceImages(MethodView):
 
 @blp.route("/client/workspaces", strict_slashes=False)
 class UserWorkSpaces(MethodView):
-    @jwt_required()
     @blp.response(200, WorkSpaceSchema)
     def get(self):
-        user_id = get_jwt_identity()
-        jwt = get_jwt()
-        if jwt.get("is_admin"):
-            abort(401, message="client privilage required")
+        # user_id = get_jwt()
+        # if jwt.get("is_admin"):
+        #     abort(401, message="client privilage required")
         workSpace = WorkSpaceModel.query.all()
         #
         work_spaces = workSpace
