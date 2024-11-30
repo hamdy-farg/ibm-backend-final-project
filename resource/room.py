@@ -137,7 +137,8 @@ class Room(MethodView):
 class GetAllWorkSpaceRoom(MethodView):
     @blp.arguments(RoomsSchema, location="form")
     @blp.response(200, RoomsSchema)
-    def get(self, room_data):
+    def post(self, room_data):
+            """ to get work space rooms"""
             workSpace   = WorkSpaceModel.query.filter(WorkSpaceModel.id == room_data.get("work_space_id")).first()
             RoomsList = []
             if workSpace is not None:
@@ -153,6 +154,7 @@ class GetAllWorkSpaceRoom(MethodView):
        
 @blp.route("/room/image/<string:room_id>")
 class RoomImage(MethodView):
+    """ to provide image end point to display image"""
     def get(self, room_id):
         room = RoomModel.query.filter(RoomModel.id == room_id).first()
         image = os.path.join(os.getcwd(),"assets", "user","room_pics", room.image)

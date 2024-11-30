@@ -116,9 +116,12 @@ class UserWorkSpaces(MethodView):
         # user_id = get_jwt()
         # if jwt.get("is_admin"):
         #     abort(401, message="client privilage required")
-        workSpace = WorkSpaceModel.query.all()
+        work_spaces = None
+        try:
+            work_spaces = WorkSpaceModel.query.all()
+        except Exception as e:
+            pass
         #
-        work_spaces = workSpace
         workSpaceList = []
         if work_spaces is not None:
             for work_space in work_spaces:
@@ -140,7 +143,11 @@ class UserWorkSpaces(MethodView):
             abort(401, message="Admin privilage required")
         admin = UserModel.query.filter(UserModel.id == user_id, UserModel.role == RoleEnum.admin).first()
         #
-        work_spaces = admin.workSpaces.all()
+        work_spaces = None
+        try:
+            work_spaces = admin.workSpaces.all()
+        except Exception as e:
+            pass
         workSpaceList = []
         if work_spaces is not None:
             for work_space in work_spaces:
