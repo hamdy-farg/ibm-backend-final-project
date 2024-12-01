@@ -104,7 +104,8 @@ class WorkSpaceImages(MethodView):
     def get(self, work_space_id):
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_id).first()
         if work_space is not None:
-            imageName = os.path.join(os.getcwd(),"assets", "work_space_pics",work_space.image)
+            print(work_space.image)
+            imageName = os.path.join(os.getcwd(),"assets","user", "work_space_pics",work_space.image)
             return send_file(imageName, mimetype='image/jpeg')
         return jsonify({"": ""})
 
