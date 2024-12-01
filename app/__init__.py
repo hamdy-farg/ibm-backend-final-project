@@ -24,7 +24,7 @@ class Config(object):
     OPENAPI_SWAGGER_UI_PATH = '/swagger'
     OPENAPI_SWAGGER_UI_URL = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist/' 
     #'mysql+mysqlconnector://root:0000@127.0.0.1:3306/bankdb1'
-    SQLALCHEMY_DATABASE_URI = "mysql://avnadmin:AVNS_ubxukWZBkNZDpbXVqm4@mysql-9922e3a-farghamdy72-61e3.b.aivencloud.com:25133/defaultdb"
+    SQLALCHEMY_DATABASE_URI = "mysql://avnadmin:AVNS_ubxukWZBkNZDpbXVqm4@mysql-9922e3a-farghamdy72-61e3.b.aivencloud.com:25133/defaultdb2"
     SQLALCHEMY_TRACK_MODIFICATION = False
     #JWT config
     JWT_SECRET_KEY = "105119963872580105811750424767882539424"

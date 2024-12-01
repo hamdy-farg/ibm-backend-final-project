@@ -24,11 +24,14 @@ class WorkSpcae(MethodView):
         owner_id = get_jwt_identity()
         owner = UserModel.query.filter(UserModel.id == owner_id).first()
         work_space = WorkSpaceModel(**work_space_data, owner = owner)
+
         work_space_image_saved = work_space.save_image(request_data=request, folder_name="work_space_pics")
+
         if  isinstance(work_space_image_saved, str):
             error_msg = work_space_image_saved
             abort(401 , message= error_msg)
-        work_space_saved = work_space.save()
+            
+        work_space_saved = work_space.save()            
         if work_space_saved:
 
                 work_space.image = work_space.convert_image_to_link(route="/workspace/image/", image_id =work_space.id)
