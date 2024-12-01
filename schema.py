@@ -21,9 +21,8 @@ class PlainWorkSpaceSchema(Schema):
     @validates("title")
     def validate_title(self, value):
         """Validate Title and last name."""
-        if not value.isalpha():
-            raise ValidationError("Title must contain only alphabetic characters.")
-        if len(value) < 2 or len(value) > 50:
+       
+        if len(value) <= 2  or len(value) > 50:
             raise ValidationError("Title must be between 2 and 50 characters long.")
     
     @validates("description")
@@ -93,9 +92,8 @@ class PlainRoomSchema(Schema):
     @validates("title")
     def validate_title(self, value):
         """Validate Title and last name."""
-        if not value.isalpha():
-            raise ValidationError("Title must contain only alphabetic characters.")
-        if len(value) < 2 or len(value) > 50:
+       
+        if len(value) <= 2 or len(value) > 50:
             raise ValidationError("Title must be between 2 and 50 characters long.")
     
     @validates("description")
