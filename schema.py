@@ -2,7 +2,7 @@ import datetime
 import os
 import re
 
-from flask_smorest import abort
+from flask_smorest import    abort
 from marshmallow import Schema, ValidationError, fields, validates
 from werkzeug.utils import secure_filename
 
@@ -23,18 +23,18 @@ class PlainWorkSpaceSchema(Schema):
         """Validate Title and last name."""
        
         if len(value) <= 2  or len(value) > 50:
-            raise ValidationError("Title must be between 2 and 50 characters long.")
+            abort(400,message= "Title must be between 2 and 50 characters long.")
     
     @validates("description")
     def validate_description(self, value):
         """Validate Title and last name."""
         if len(value) < 20 or len(value) > 500:
-            raise ValidationError("Name must be between 20 and 500 characters long.")
+            abort(400 ,message= "Name must be between 20 and 500 characters long.")
         
     @validates("location")
     def validate_location(self, value):
         if len(value) < 20:
-            raise ValidationError("this is not valid location")
+            abort(400, message="this is not valid location")
         
 class PlainGetWorkSpace(Schema):
     work_space_id = fields.Str(required=True)
@@ -43,7 +43,7 @@ class PlainGetWorkSpace(Schema):
     def validate_work_space_id(self, value):
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == value).first()
         if work_space is None:
-            raise ValidationError("your workspace is not found")
+            abort(400, message="your workspace is not found")
         
 class PlainUpdateWorkSpaceSchema(PlainWorkSpaceSchema):
     work_space_id = fields.Str(required=True)
@@ -54,7 +54,7 @@ class PlainUpdateWorkSpaceSchema(PlainWorkSpaceSchema):
     def validate_work_space_id(self, value):
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id ==value).first()
         if work_space is None:
-            raise ValidationError("this id is not found")
+            abort(400, message="this id is not found")
         
 
 
@@ -79,7 +79,7 @@ class PlainRoomSchema(Schema):
         try:
             datetime.datetime.strptime(value, "%Y-%m-%d")
         except Exception as e:
-            raise ValidationError("you must send date with formate of year-month-day") 
+            abort(400, message="you must send date with formate of year-month-day") 
     #
     @validates("start_time")
     @validates("end_time")
@@ -88,19 +88,19 @@ class PlainRoomSchema(Schema):
         try:
             datetime.datetime.strptime(value, "%H:%M:%S")
         except Exception as e:
-            raise ValidationError("you must send time with formate of hour:month:seconds") 
+             abort(400, message="you must send time with formate of hour:month:seconds") 
     @validates("title")
     def validate_title(self, value):
         """Validate Title and last name."""
        
         if len(value) <= 2 or len(value) > 50:
-            raise ValidationError("Title must be between 2 and 50 characters long.")
+            abort(400, message="Title must be between 2 and 50 characters long.")
     
     @validates("description")
     def validate_description(self, value):
         """Validate Title and last name."""
         if len(value) < 20 or len(value) > 500:
-            raise ValidationError("Name must be between 20 and 500 characters long.")
+            abort(400, message="Name must be between 20 and 500 characters long.")
     
     @validates("start_date")
     def validate_description(self, value):
@@ -108,14 +108,14 @@ class PlainRoomSchema(Schema):
         start_date = datetime.datetime.strptime(value, DATE_STAMP).date()
         print(start_date)
         if not start_date:
-            raise ValidationError("you have to enter correct start date")
+            abort(400, message="you have to enter correct start date")
     @validates("capacity")
     def validate_description(self, value):
         """Validate capacity."""
         try:
             price = int(value)
         except Exception as e:
-            raise ValidationError("you must send capacity in integer formate")
+            abort(400, message="you must send capacity in integer formate")
    
         
 class RoomSchema(Schema):
@@ -161,13 +161,13 @@ class PlainUserLoginSchema(Schema):
         if len(value) < 8 or len(value) > 32:
             abort(400, message="Password must be between 8 and 32 characters long.")
         if not any(char.isdigit() for char in value):
-           abort(400, message="Password must contain at least one digit.")
+            abort(400, message="Password must contain at least one digit.")
         if not any(char.isupper() for char in value):
-           abort(400, message="Password must contain at least one uppercase letter.")
+            abort(400, message="Password must contain at least one uppercase letter.")
         if not any(char.islower() for char in value):
             abort(400, "Password must contain at least one lowercase letter.")
         if not any(char in "!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?`~" for char in value):
-           abort(400, message="Password must contain at least one special character.")
+            abort(400, message="Password must contain at least one special character.")
            
 class PlainUserRegisterSchema(PlainUserLoginSchema):
     id = fields.Str(dump_only=True)
@@ -230,7 +230,7 @@ class PlainBookedSchema(Schema):
         try:
             datetime.datetime.strptime(value, "%Y-%m-%d")
         except Exception as e:
-            raise ValidationError("you must send date with formate of year-month-day") 
+            abort(400, message="you must send date with formate of year-month-day") 
     #
     @validates("start_time")
     @validates("end_time")
@@ -239,7 +239,7 @@ class PlainBookedSchema(Schema):
         try:
             datetime.datetime.strptime(value, "%H:%M:%S")
         except Exception as e:
-            raise ValidationError("you must send time with formate of hour:month:seconds") 
+            abort(400, message="you must send time with formate of hour:month:seconds") 
     
     @validates("price")
     def validate_description(self, value):
@@ -247,7 +247,7 @@ class PlainBookedSchema(Schema):
         try:
             price = float(value)
         except Exception as e:
-            raise ValidationError("you must send price in flaot formate")
+            abort(400, message="you must send price in flaot formate")
 class BookUpdateSchema(PlainBookedSchema):
     book_id = fields.Str(required=True)
     client_id = fields.Str(dump_only=True)#!
