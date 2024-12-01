@@ -30,7 +30,7 @@ class WorkSpcae(MethodView):
         if  isinstance(work_space_image_saved, str):
             error_msg = work_space_image_saved
             abort(401 , message= error_msg)
-            
+
         work_space_saved = work_space.save()            
         if work_space_saved:
 
@@ -104,7 +104,7 @@ class WorkSpaceImages(MethodView):
     def get(self, work_space_id):
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_id).first()
         if work_space is not None:
-            imageName = os.path.join(os.getcwd(),work_space.image)
+            imageName = os.path.join(os.getcwd(),"assets", "work_space_pics",work_space.image)
             return send_file(imageName, mimetype='image/jpeg')
         return jsonify({"": ""})
 
