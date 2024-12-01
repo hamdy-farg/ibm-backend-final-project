@@ -21,7 +21,7 @@ class PlainWorkSpaceSchema(Schema):
     @validates("title")
     def validate_title(self, value):
         """Validate Title and last name."""
-       
+        
         if len(value) <= 2  or len(value) > 50:
             abort(400,message= "Title must be between 2 and 50 characters long.")
     

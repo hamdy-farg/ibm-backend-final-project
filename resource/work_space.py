@@ -55,7 +55,7 @@ class WorkSpcae(MethodView):
             abort(401, message="Admin privilage required")
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_data.get("work_space_id")).first()
         if request.files["image"] is not None:
-            work_space_saved = work_space.save_image(folder_name='user/work_space_pics', request_data = request)
+            work_space_saved = work_space.save_image(folder_name='work_space_pics', request_data = request)
             if isinstance(work_space_saved,str):
                 error_message = work_space_saved 
                 abort(500, message= error_message)
