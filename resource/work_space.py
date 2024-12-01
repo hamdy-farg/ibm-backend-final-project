@@ -23,7 +23,7 @@ class WorkSpcae(MethodView):
             abort(401, message="Admin privilage required")
         owner_id = get_jwt_identity()
         workspaceTitle = WorkSpaceModel.query.filter(WorkSpaceModel.title == work_space_data.get("title")).first()
-        if workspaceTitle is None:
+        if workspaceTitle is not None:
             abort (400 , message="this work space title is taken before choose another one")
 
         owner = UserModel.query.filter(UserModel.id == owner_id).first()
