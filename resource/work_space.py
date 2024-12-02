@@ -49,16 +49,31 @@ class WorkSpcae(MethodView):
     @blp.arguments(PlainUpdateWorkSpaceSchema, location="form")
     @blp.response(200, PlainUpdateWorkSpaceSchema)
     def put(self, work_space_data):
+        print('entered')
         user = get_jwt_identity()
         jwt = get_jwt()
         if not jwt.get("is_admin"):
+            print('entered10')
             abort(401, message="Admin privilage required")
+        print('entered4')
+
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id == work_space_data.get("work_space_id")).first()
-        if request.files["image"] is not None:
-            work_space_saved = work_space.save_image(folder_name='work_space_pics', request_data = request)
-            if isinstance(work_space_saved,str):
-                error_message = work_space_saved 
-                abort(500, message= error_message)
+        print(work_space)
+        # if (work_space_data.get("image")):
+        try:
+            if request.files["image"] is not None:
+                print('entered2')
+                work_space_saved = work_space.save_image(folder_name='work_space_pics', request_data = request)
+                if isinstance(work_space_saved,str):
+                    error_message = work_space_saved 
+                    abort(500, message= error_message)
+        except Exception as e:
+            print(f"there is no image here")
+
+
+        
+        print('entered5')
+
         work_space_saved = work_space.update(**work_space_data)
         if work_space_saved:
             work_space.image = work_space.convert_image_to_link(route='/workspace/image/', image_id =work_space.id)

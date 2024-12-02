@@ -102,6 +102,7 @@ class Room(MethodView):
         room = RoomModel.query.filter(RoomModel.id == room_data.get("room_id")).first()
         if room is None:
             abort(404, "your room is not found")
+            
         saved = room.save_image(request_data = request, folder_name="room_pics")
         if isinstance(saved, str):
             error_msg = saved

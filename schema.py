@@ -2,7 +2,7 @@ import datetime
 import os
 import re
 
-from flask_smorest import    abort
+from flask_smorest import abort
 from marshmallow import Schema, ValidationError, fields, validates
 from werkzeug.utils import secure_filename
 
@@ -50,6 +50,8 @@ class PlainUpdateWorkSpaceSchema(PlainWorkSpaceSchema):
     title = fields.Str()
     description = fields.Str()
     location = fields.Str()
+    image = fields.Field()
+
     @validates("work_space_id")
     def validate_work_space_id(self, value):
         work_space = WorkSpaceModel.query.filter(WorkSpaceModel.id ==value).first()
