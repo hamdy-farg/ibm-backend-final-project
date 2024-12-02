@@ -147,7 +147,7 @@ class GetAllWorkSpaceRoom(MethodView):
                 workSpaceRoomsList =  workSpace.rooms
                 print(workSpaceRoomsList)
                 for workSpaceRoom in workSpaceRoomsList:
-                    workSpaceRoom.image =room.convert_image_to_link(route="/room/image/", image_id=room.id)
+                    workSpaceRoom.image =workSpaceRoom.convert_image_to_link(route="/room/image/", image_id=room.id)
                     #f"{os.getenv("LOCALHOST","http://127.0.0.1:5000/")}"+ "room/image/"+f"{workSpaceRoom.id}"
                     RoomsList.append(workSpaceRoom)
                 return {"work_space_id":workSpace.id,"rooms":RoomsList}
