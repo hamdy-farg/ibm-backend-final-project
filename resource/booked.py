@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask.views import MethodView
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_smorest import Blueprint, abort
 from sqlalchemy import and_, or_
 
@@ -99,6 +100,9 @@ class Book(MethodView):
         end_time = datetime.strptime(end_time, TIMEFORMAT).time()
         date = datetime.strptime(date, DATEFORMAT).date()
         #
+        if start >= end_time:
+            abort(401, message="start can not be greater than or equal end time") 
+
         if room.start_time >  start_time or room.end_time < end_time:
             abort(401, message="start and end time must be included in room start and end") 
         if room.start_date > date and room.end_date < date:
@@ -208,3 +212,39 @@ class GetAll(MethodView):
                 }
         else:
             abort(404, message="your room is not found")
+
+
+from db import db
+from models import WorkSpaceModel
+
+
+@blp.route("/admin/books")
+class GetAll(MethodView):
+    @jwt_required()
+    # @blp.arguments(BookListSchema, location="form")
+    @blp.response(200, BookListSchema)
+    def get(self):
+        # Get the current admin's ID from the JWT token
+        admin_id = get_jwt_identity()
+
+        # Fetch all workspaces for this admin
+        workspaces = WorkSpaceModel.query.filter_by(owner_id=admin_id).all()
+
+        # Collect all room IDs from the admin's workspaces
+        room_ids = []
+        for workspace in workspaces:
+            if workspace.rooms:  # Ensure the workspace has rooms
+                for room in workspace.rooms:
+                    room_ids.append(room.id)
+
+        # Fetch all bookings associated with the collected room IDs
+        books = []
+        admin_books = BookModel.query.filter(BookModel.room_id.in_(room_ids)).all()
+        for book in admin_books:
+            room = RoomModel.query.filter(RoomModel.id == book.room_id).first()
+            book.room_image = room.convert_image_to_link(route="/room/image/", image_id= room.id)
+            books.append(book)
+        
+        return {"roomBookings":books}
+
+            

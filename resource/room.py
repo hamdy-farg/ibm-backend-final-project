@@ -103,18 +103,21 @@ class Room(MethodView):
         if room is None:
             abort(404, "your room is not found")
         try:
-            saved = room.save_image(request_data = request, folder_name="room_pics")
+            if request.files["image"] != None:
+                saved = room.save_image(request_data = request, folder_name="room_pics")
+                if isinstance(saved, str):
+                    error_msg = saved
+                    abort(401, message = error_msg)
+                    room.save()
         except  Exception as e:
             print(e)
-        if isinstance(saved, str):
-            error_msg = saved
-            abort(401, message = error_msg)
-        room.save()
+       
         room.update(**room_data)
         if room is not None:
             room.image = room.convert_image_to_link(route="/room/image/",image_id = room.id)
             return room
-       
+
+    @jwt_required()   
     @blp.arguments(RoomSchema, location="form")
     @blp.response(200, SuccessSchema)
     def delete(self, room_data):

@@ -257,10 +257,19 @@ class BookUpdateSchema(PlainBookedSchema):
 class BookDeleteSchema(Schema):
     book_id = fields.Str(required=True)
 
-
+class PlainBookingsSchema(Schema):
+    id = fields.Str(dump_only=True)
+    client_id = fields.Str(required=True)
+    room_id = fields.Str(required=True)
+    price = fields.Float(required=True)
+    date =  fields.Str(required=True)
+    start_time = fields.Str(required=True)
+    end_time = fields.Str(required=True)
+    status = fields.Enum(enum=StatusEnum)
+    room_image = fields.Str(dump_only=True)
 class BookListSchema(Schema):
     room_id = fields.Str(required=True)
-    roomBookings = fields.List(fields.Nested(PlainBookedSchema), dump_only=True)
+    roomBookings = fields.List(fields.Nested(PlainBookingsSchema), dump_only=True)
     
 class BookedSchema(Schema):
     date = fields.Str(required=True)
