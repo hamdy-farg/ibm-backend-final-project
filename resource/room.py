@@ -102,15 +102,17 @@ class Room(MethodView):
         room = RoomModel.query.filter(RoomModel.id == room_data.get("room_id")).first()
         if room is None:
             abort(404, "your room is not found")
-            
-        saved = room.save_image(request_data = request, folder_name="room_pics")
+        try:
+            saved = room.save_image(request_data = request, folder_name="room_pics")
+        except  Exception as e:
+            print(e)
         if isinstance(saved, str):
             error_msg = saved
             abort(401, message = error_msg)
         room.save()
         room.update(**room_data)
         if room is not None:
-            room.image = room.convert_image_to_link(route="/room/image/",iamge_id = room.id)
+            room.image = room.convert_image_to_link(route="/room/image/",image_id = room.id)
             return room
        
     @blp.arguments(RoomSchema, location="form")
