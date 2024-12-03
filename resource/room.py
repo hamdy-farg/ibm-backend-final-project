@@ -141,6 +141,23 @@ class Room(MethodView):
  
 
 
+
+@blp.route('/rooms/all')
+class GetAllWorkSpaceRoom(MethodView):
+    @blp.response(200, RoomsSchema)
+    def get(self):
+            """ to get work space rooms"""
+            rooms  = RoomModel.query.all()
+            RoomsList = []
+            if rooms is not None:
+                for room in rooms:
+                    room.image =room.convert_image_to_link(route="/room/image/", image_id=room.id)
+                    #f"{os.getenv("LOCALHOST","http://127.0.0.1:5000/")}"+ "room/image/"+f"{workSpaceRoom.id}"
+                    RoomsList.append(room)
+                return {"rooms":RoomsList}
+            abort(404,message =  "your work space is not found")
+
+
 @blp.route('/workspace/rooms')
 class GetAllWorkSpaceRoom(MethodView):
     @blp.arguments(RoomsSchema, location="form")

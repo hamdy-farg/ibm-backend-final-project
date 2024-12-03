@@ -26,32 +26,26 @@ def get_avialable_time(room_id: str, date:str):
         """
         room = RoomModel.query.filter(RoomModel.id == room_id).first()
         if room is None:
-            return {
-                "code": 404,
-                "message":"room with this id not found",
-                "status": False
-            }
+            abort(404,
+                message="room with this id not found",)
+            
 
         try:
             date = datetime.strptime(date, DATEFORMAT).date()
         except Exception:
-            return {
-                "code": 401,
-                "message":"invalid date formate",
-                "status": False
-            }
+            abort (401,message="invalid date formate")
         if date < datetime.now().date():
-            return  {
-                "code": 401,
-                "message":"you can not select date in the past",
-                "status": False 
-            }   
+            abort  (
+                 401,
+                message ="you can not select date in the past",
+                 
+            )   
         if date > room.end_date or  date < room.start_date:
-            return {
-                "code": 401,
-                "message":"invalid date select is out of range",
-                "status": False
-            }
+            abort(
+               401,
+                message="invalid date select is out of range",
+              
+            )
         default_start_time = room.start_time
         default_end_time = room.end_time
 
@@ -134,18 +128,7 @@ class Book(MethodView):
             return book
         abort(500 , "error accured while saving in db")
 
-        
-    @blp.arguments(BookedSchema,location="form")
-    # @blp.response(200, BookedSchema)
-    def get(self, book_data):
-        date = book_data.get("date")
-        room_id = book_data.get("room_id")
-        available_slots = get_avialable_time(room_id=room_id, date=date)
-        formated_slots = [{
-            "start_time": slot[0].strftime(TIMEFORMAT),
-            "end_time":slot[1].strftime(TIMEFORMAT)
-        } for slot in available_slots]
-        return formated_slots,200
+   
     #
     @blp.arguments(BookUpdateSchema,location="form")
     @blp.response(200, PlainBookedSchema)
@@ -273,3 +256,18 @@ class BookStatus (MethodView) :
         except Exception as e:
             abort(500, message=f"{e}")
 
+
+@blp.route("/book/available")
+class AvialableTime(MethodView):
+    @blp.arguments(BookedSchema,location="form")
+    # @blp.response(200, BookedSchema)
+    def post(self, book_data):
+        date = book_data.get("date")
+        room_id = book_data.get("room_id")
+        available_slots = get_avialable_time(room_id=room_id, date=date)
+        
+        formated_slots = [{
+            "start_time": slot[0].strftime(TIMEFORMAT),
+            "end_time":slot[1].strftime(TIMEFORMAT)
+        } for slot in available_slots]
+        return formated_slots,200

@@ -133,7 +133,7 @@ class WorkSpaceImages(MethodView):
 
 
 
-@blp.route("/client/workspaces", strict_slashes=False)
+@blp.route("/workspace/all", strict_slashes=False)
 class UserWorkSpaces(MethodView):
     @blp.response(200, WorkSpaceSchema)
     def get(self):
