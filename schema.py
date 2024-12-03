@@ -267,6 +267,9 @@ class PlainBookingsSchema(Schema):
     end_time = fields.Str(required=True)
     status = fields.Enum(enum=StatusEnum)
     room_image = fields.Str(dump_only=True)
+    work_space_image = fields.Str(dump_only=True)
+    room_title = fields.Str(dump_only=True)
+
 class BookListSchema(Schema):
     room_id = fields.Str(required=True)
     roomBookings = fields.List(fields.Nested(PlainBookingsSchema), dump_only=True)
@@ -279,6 +282,10 @@ class BookedSchema(Schema):
 
 class WorkSpaceSchema(Schema):
     workSpaces = fields.List(fields.Nested(PlainWorkSpaceSchema), dump_only=True)
+    
+class updateBookStatusSchema(Schema):
+    status = fields.Enum(enum= StatusEnum, required=True)
+    booked_id = fields.String(required=True)
 
 # class AdminSchema(PlainUserRegisterSchema):
 

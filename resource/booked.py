@@ -8,7 +8,7 @@ from sqlalchemy import and_, or_
 from models import BookModel, RoleEnum, RoomModel, UserModel
 from schema import (DATEFORMAT, TIMEFORMAT, BookDeleteSchema, BookedSchema,
                     BookListSchema, BookUpdateSchema, PlainBookedSchema,
-                    RoomsSchema, SuccessSchema)
+                    RoomsSchema, SuccessSchema, updateBookStatusSchema)
 
 blp = Blueprint("Book", "book", description="CRUD opration to make booking")
 def get_avialable_time(room_id: str, date:str):
@@ -159,10 +159,12 @@ class Book(MethodView):
         price = book_data.get("price")
         start_time =  datetime.strptime(start_time, TIMEFORMAT).time()
         end_time =  datetime.strptime(end_time, TIMEFORMAT).time()
+
         date = book_data.get("date")
         available_slots = get_avialable_time(room_id=book.room.id, date= date)
+        print("hiiiiiiiiii",available_slots)
         for slot in available_slots:
-            print(slot[0], slot[1])
+
             print(slot[0] <= start_time and slot[1] >= end_time)
             if not(slot[0] <= start_time and slot[1] >= end_time):
                 abort(401, message="you can not choose this hours")
@@ -187,6 +189,10 @@ class Book(MethodView):
             "message": "the booked deleted successfully",
             "success": True 
         }
+
+
+
+
 @blp.route("/client/book")
 class GetAll(MethodView):
     @blp.arguments(BookListSchema, location="form")
@@ -242,9 +248,28 @@ class GetAll(MethodView):
         admin_books = BookModel.query.filter(BookModel.room_id.in_(room_ids)).all()
         for book in admin_books:
             room = RoomModel.query.filter(RoomModel.id == book.room_id).first()
+            book.room_title = room.title
+            book.work_space_title = room.workSpace.title
             book.room_image = room.convert_image_to_link(route="/room/image/", image_id= room.id)
             books.append(book)
         
         return {"roomBookings":books}
 
-            
+@blp.route("/book/status")    
+class BookStatus (MethodView) :
+    @blp.arguments(updateBookStatusSchema,location="form")
+    @blp.response(200, PlainBookedSchema)
+    def put(self, book_data):
+        try:
+            book = BookModel.query.filter(BookModel.id == book_data.get("booked_id")).first()
+            book_data.pop("booked_id")
+            if book == None:
+                abor(404, message="your book not found")
+            updated = book.update(**book_data)
+            if updated:
+                return book
+            else:
+                abort(500, message= "an error accred while saving in db" )
+        except Exception as e:
+            abort(500, message=f"{e}")
+
