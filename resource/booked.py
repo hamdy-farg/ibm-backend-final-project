@@ -67,11 +67,12 @@ def get_avialable_time(room_id: str, date:str):
 
 @blp.route("/book")
 class Book(MethodView):
-
+    @jwt_required()
     @blp.arguments(PlainBookedSchema, location="form")
     @blp.response(200, PlainBookedSchema)
     def post(self, book_data):
-        client = UserModel.query.filter(UserModel.id == book_data.get("client_id"),
+        client_id = get_jwt_identity()
+        client = UserModel.query.filter(UserModel.id == client_id,
         UserModel.role == RoleEnum.client).first()
         #
         if client is None:

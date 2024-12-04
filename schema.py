@@ -217,7 +217,7 @@ class PlainUserUpdateSchema(Schema):
 
 class PlainBookedSchema(Schema):
     id = fields.Str(dump_only=True)
-    client_id = fields.Str(required=True)
+    client_id = fields.Str()
     room_id = fields.Str(required=True)
     price = fields.Float(required=True)
     date =  fields.Str(required=True)
