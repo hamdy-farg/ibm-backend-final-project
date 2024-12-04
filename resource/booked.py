@@ -95,7 +95,7 @@ class Book(MethodView):
         end_time = datetime.strptime(end_time, TIMEFORMAT).time()
         date = datetime.strptime(date, DATEFORMAT).date()
         #
-        if start >= end_time:
+        if start_time >= end_time:
             abort(401, message="start can not be greater than or equal end time") 
 
         if room.start_time >  start_time or room.end_time < end_time:
